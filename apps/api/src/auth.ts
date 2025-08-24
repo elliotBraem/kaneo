@@ -11,8 +11,10 @@ dotenv.config();
 
 export const auth: ReturnType<typeof betterAuth> = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:1337",
-  trustedOrigins: ["http://localhost:5173"], // TODO: Add production URL
-  secret: process.env.JWT_ACCESS_SECRET || "",
+  trustedOrigins: process.env.CORS_ORIGINS?.split(",") || [
+    "http://localhost:5173",
+  ],
+  secret: process.env.JWT_ACCESS || "",
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
@@ -92,4 +94,17 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
       },
     }),
   ],
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 minutes cache - reduces DB hits
+    },
+  },
+  advanced: {
+    defaultCookieAttributes: {
+      sameSite: "none", // need this to allow many clients
+      secure: true,
+      partitioned: true,
+    },
+  },
 });
